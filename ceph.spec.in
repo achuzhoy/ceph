@@ -1136,8 +1136,11 @@ ln -sf %{_libdir}/librbd.so.1 /usr/lib64/qemu/librbd.so.1
 
 %post selinux
 /sbin/service ceph stop >/dev/null 2>&1
-semodule -n -i %{_datadir}/selinux/packages/ceph.pp
-if /usr/sbin/selinuxenabled ; then
+OLD_POLVER=$(/usr/sbin/semodule -l | grep -P '^ceph[\t ]' | awk '{print $2}')
+/usr/sbin/semodule -n -i %{_datadir}/selinux/packages/ceph.pp
+NEW_POLVER=$(/usr/sbin/semodule -l | grep -P '^ceph[\t ]' | awk '{print $2}')
+/usr/sbin/selinuxenabled
+if test $? -eq 0 -a "$OLD_POLVER" != "$NEW_POLVER"; then
     /usr/sbin/load_policy
     %relabel_files
 fi
